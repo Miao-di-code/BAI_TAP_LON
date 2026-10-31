@@ -24,4 +24,18 @@ class ModelTest {
         assertInstanceOf(Vehicle.class, ItemCategory.VEHICLE.factory()
                 .create(3, 2, "Bike", "Used", 100, "Make"));
     }
+
+    @Test
+    void bidTransactionRejectsZeroAndNegativePrice() {
+        assertThrows(IllegalArgumentException.class, () -> {
+            new BidTransaction(1L, 42L, 99L, -50000L, 1690000000L);
+        });
+
+        assertThrows(IllegalArgumentException.class, () -> {
+            new BidTransaction(2L, 42L, 99L, 0L, 1690000000L);
+        });
+
+        BidTransaction validBid = new BidTransaction(3L, 42L, 99L, 150000L, 1690000000L);
+        assertEquals(150000L, validBid.getAmountVnd());
+    }
 }
