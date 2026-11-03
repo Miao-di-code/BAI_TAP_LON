@@ -1,0 +1,14 @@
+.root { -fx-font-family: "Segoe UI"; -fx-font-size: 14px; -fx-background-color: #f3f6fb; }
+.toolbar { -fx-padding: 16 22; -fx-background-color: #ffffff; -fx-border-color: #dce4ef; -fx-border-width: 0 0 1 0; }
+.content { -fx-padding: 22; }
+.card { -fx-padding: 22; -fx-background-color: white; -fx-background-radius: 10; -fx-border-color: #dce4ef; -fx-border-radius: 10; }
+.title { -fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #172b4d; }
+.section { -fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #172b4d; }
+.subtitle { -fx-text-fill: #607087; }
+.price { -fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #126c55; }
+.feedback { -fx-text-fill: #b04332; }
+.result { -fx-padding: 12; -fx-background-color: #e1f4e8; -fx-background-radius: 6; -fx-text-fill: #176047; }
+.button { -fx-cursor: hand; -fx-padding: 8 14; }
+.button.primary { -fx-background-color: #2457a7; -fx-text-fill: white; }
+.list-view { -fx-background-color: white; -fx-border-color: #dce4ef; }
+.list-cell { -fx-padding: 10; }
