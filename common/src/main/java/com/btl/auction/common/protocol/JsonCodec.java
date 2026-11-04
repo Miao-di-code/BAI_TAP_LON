@@ -56,6 +56,16 @@ public final class JsonCodec {
         }
     }
 
+    public static EventMessage parseEvent(String line) {
+        try {
+            JsonObject object = JsonParser.parseString(line).getAsJsonObject();
+            return new EventMessage(EventType.valueOf(requiredString(object, "type")),
+                    object.get("auctionId").getAsLong(), object.getAsJsonObject("payload"));
+        } catch (RuntimeException ex) {
+            throw new InvalidProtocolException("invalid event JSON", ex);
+        }
+    }
+
     private static String requiredString(JsonObject object, String field) {
         JsonElement element = object.get(field);
         if (element == null || !element.isJsonPrimitive()
