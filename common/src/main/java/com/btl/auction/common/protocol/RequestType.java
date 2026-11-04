@@ -1,5 +1,29 @@
 package com.btl.auction.common.protocol;
 
 public enum RequestType {
-    PING
+    PING,
+    REGISTER,
+    LOGIN,
+    LOGOUT,
+    LIST_AUCTIONS,
+    GET_AUCTIONS,
+    GET_AUCTION,
+    GET_AUCTION_DETAIL,
+    GET_MY_ITEMS,
+    LIST_ITEMS,
+    GET_ITEM,
+    CREATE_ITEM,
+    UPDATE_ITEM,
+    DELETE_ITEM,
+    CREATE_AUCTION,
+    PLACE_BID,
+    SET_AUTO_BID,
+    GET_AUTO_BID,
+    REMOVE_AUTO_BID,
+    GET_BIDS,
+    GET_BID_HISTORY,
+    SUBSCRIBE_AUCTION,
+    UNSUBSCRIBE_AUCTION,
+    MARK_PAID,
+    CANCEL_AUCTION
 }

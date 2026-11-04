@@ -21,6 +21,42 @@ import org.junit.jupiter.api.Test;
 
 class SocketServerPingTest {
     @Test
+    void routesSeveralRequestsOverOneConnection() throws Exception {
+        try (SocketServer server = new SocketServer(0)) {
+            CompletableFuture<Void> serving = CompletableFuture.runAsync(() -> {
+                try {
+                    server.serve();
+                } catch (Exception ex) {
+                    throw new RuntimeException(ex);
+                }
+            });
+            try (Socket client = new Socket("127.0.0.1", server.port())) {
+                client.setSoTimeout(2000);
+                BufferedWriter output = new BufferedWriter(new OutputStreamWriter(
+                        client.getOutputStream(), StandardCharsets.UTF_8));
+                output.write(JsonCodec.toJson(new RequestMessage(
+                        "first", RequestType.PING, null, new JsonObject())));
+                output.newLine();
+                output.write(JsonCodec.toJson(new RequestMessage(
+                        "second", RequestType.REGISTER, null, new JsonObject())));
+                output.newLine();
+                output.flush();
+                ResponseMessage first = JsonCodec.parseResponse(LineFraming.readLine(
+                        client.getInputStream()));
+                ResponseMessage second = JsonCodec.parseResponse(LineFraming.readLine(
+                        client.getInputStream()));
+                assertEquals("first", first.requestId());
+                assertTrue(first.success());
+                assertEquals("second", second.requestId());
+                assertEquals(ErrorCode.UNSUPPORTED_REQUEST, second.errorCode());
+            } finally {
+                server.close();
+            }
+            serving.get(2, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
     void malformedRequestDoesNotPreventTheNextPing() throws Exception {
         try (SocketServer server = new SocketServer(0)) {
             CompletableFuture<Void> serving = CompletableFuture.runAsync(() -> {

@@ -6,7 +6,6 @@ import com.btl.auction.common.protocol.JsonCodec;
 import com.btl.auction.common.protocol.LineFraming;
 import com.btl.auction.common.protocol.RequestMessage;
 import com.btl.auction.common.protocol.ResponseMessage;
-import com.google.gson.JsonObject;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
@@ -16,11 +15,17 @@ import java.net.Socket;
 import java.net.SocketException;
 import java.nio.charset.StandardCharsets;
 
-/** Week 1 TCP smoke server: one PING request per connection. */
+/** Sequential TCP server; concurrent client handling is added in week 3. */
 public final class SocketServer implements AutoCloseable {
     private final ServerSocket listener;
+    private final RequestDispatcher dispatcher;
 
     public SocketServer(int port) throws IOException {
+        this(port, new RequestDispatcher());
+    }
+
+    public SocketServer(int port, RequestDispatcher dispatcher) throws IOException {
+        this.dispatcher = java.util.Objects.requireNonNull(dispatcher, "dispatcher");
         listener = new ServerSocket(port, 50, InetAddress.getByName("127.0.0.1"));
     }
 
@@ -48,25 +53,22 @@ public final class SocketServer implements AutoCloseable {
     }
 
     private void respond(Socket client) throws IOException {
-        String line = LineFraming.readLine(client.getInputStream());
-        if (line == null) {
-            return;
-        }
-        ResponseMessage response;
-        try {
-            RequestMessage request = JsonCodec.parseRequest(line);
-            JsonObject payload = new JsonObject();
-            payload.addProperty("pong", true);
-            response = ResponseMessage.ok(request.requestId(), payload);
-        } catch (InvalidProtocolException ex) {
-            response = ResponseMessage.error(null, ErrorCode.INVALID_REQUEST,
-                    "Invalid request JSON");
-        }
         BufferedWriter output = new BufferedWriter(new OutputStreamWriter(
                 client.getOutputStream(), StandardCharsets.UTF_8));
-        output.write(JsonCodec.toJson(response));
-        output.newLine();
-        output.flush();
+        String line;
+        while ((line = LineFraming.readLine(client.getInputStream())) != null) {
+            ResponseMessage response;
+            try {
+                RequestMessage request = JsonCodec.parseRequest(line);
+                response = dispatcher.dispatch(request);
+            } catch (InvalidProtocolException ex) {
+                response = ResponseMessage.error(null, ErrorCode.INVALID_REQUEST,
+                        "Invalid request JSON");
+            }
+            output.write(JsonCodec.toJson(response));
+            output.newLine();
+            output.flush();
+        }
     }
 
     @Override
