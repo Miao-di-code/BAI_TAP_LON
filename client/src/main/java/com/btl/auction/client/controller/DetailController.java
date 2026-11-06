@@ -1,4 +1,5 @@
 // Week 3: Show auction detail feature
+// Week 3: Submit bids validation
 package com.btl.auction.client.controller;
 
 import com.btl.auction.client.view.AppController;
