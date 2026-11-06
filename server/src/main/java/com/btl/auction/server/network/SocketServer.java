@@ -1,82 +1,154 @@
 package com.btl.auction.server.network;
 
-import com.btl.auction.common.protocol.ErrorCode;
-import com.btl.auction.common.protocol.InvalidProtocolException;
-import com.btl.auction.common.protocol.JsonCodec;
-import com.btl.auction.common.protocol.LineFraming;
-import com.btl.auction.common.protocol.RequestMessage;
-import com.btl.auction.common.protocol.ResponseMessage;
-import java.io.BufferedWriter;
+import com.btl.auction.server.db.Database;
+import com.btl.auction.server.db.DatabaseInitializer;
+import com.btl.auction.server.event.AuctionEventPublisher;
+import com.btl.auction.server.service.AuctionScheduler;
+import com.btl.auction.server.service.AuctionService;
+import com.btl.auction.server.service.AntiSnipingPolicy;
+import com.btl.auction.server.service.AuthService;
+import com.btl.auction.server.service.ProductService;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
-import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
+import java.sql.SQLException;
+import java.time.Clock;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
-/** Sequential TCP server; concurrent client handling is added in week 3. */
 public final class SocketServer implements AutoCloseable {
-    private final ServerSocket listener;
+    private static final Logger LOGGER = Logger.getLogger(SocketServer.class.getName());
+    private final int configuredPort;
+    private final Clock clock;
+    private final AuctionService auctions;
     private final RequestDispatcher dispatcher;
+    private final AuctionEventBroadcaster broadcaster;
+    private final Set<ClientSession> sessions = ConcurrentHashMap.newKeySet();
+    private final ExecutorService handlers = Executors.newCachedThreadPool();
+    private final AtomicBoolean running = new AtomicBoolean();
+    private final CountDownLatch stopped = new CountDownLatch(1);
+    private ServerSocket listener;
+    private AuctionScheduler scheduler;
 
-    public SocketServer(int port) throws IOException {
-        this(port, new RequestDispatcher());
+    public SocketServer(int port, Path databasePath, Clock clock) throws IOException, SQLException {
+        this(port, databasePath, clock, AntiSnipingPolicy.disabled());
     }
 
-    public SocketServer(int port, RequestDispatcher dispatcher) throws IOException {
-        this.dispatcher = java.util.Objects.requireNonNull(dispatcher, "dispatcher");
-        listener = new ServerSocket(port, 50, InetAddress.getByName("127.0.0.1"));
+    public SocketServer(int port, Path databasePath, Clock clock,
+                        AntiSnipingPolicy antiSniping) throws IOException, SQLException {
+        if (port < 0 || port > 65535) {
+            throw new IllegalArgumentException("Port out of range");
+        }
+        this.configuredPort = port;
+        this.clock = clock;
+        Database database = DatabaseInitializer.initialize(databasePath);
+        AuctionEventPublisher publisher = new AuctionEventPublisher();
+        auctions = new AuctionService(database, clock, publisher, antiSniping);
+        broadcaster = new AuctionEventBroadcaster(publisher);
+        dispatcher = new RequestDispatcher(new AuthService(database, clock),
+                new ProductService(database), auctions, broadcaster);
+    }
+
+    public synchronized void start() throws IOException {
+        if (!running.compareAndSet(false, true)) {
+            throw new IllegalStateException("Server already started");
+        }
+        try {
+            listener = new ServerSocket(configuredPort, 64, InetAddress.getByName("127.0.0.1"));
+            scheduler = new AuctionScheduler(auctions, clock);
+            Thread acceptThread = new Thread(this::acceptLoop, "auction-accept");
+            acceptThread.setDaemon(true);
+            acceptThread.start();
+        } catch (IOException | RuntimeException ex) {
+            close();
+            throw ex;
+        }
     }
 
     public int port() {
+        if (listener == null) {
+            throw new IllegalStateException("Server not started");
+        }
         return listener.getLocalPort();
     }
 
-    public void serve() throws IOException {
-        while (!listener.isClosed()) {
-            Socket client;
+    public void awaitTermination() throws InterruptedException {
+        stopped.await();
+    }
+
+    private void acceptLoop() {
+        while (running.get()) {
+            Socket socket = null;
+            ClientSession session = null;
             try {
-                client = listener.accept();
-            } catch (SocketException ex) {
-                if (!listener.isClosed()) {
-                    throw ex;
+                socket = listener.accept();
+                socket.setTcpNoDelay(true);
+                session = new ClientSession(socket);
+                sessions.add(session);
+                ClientSession active = session;
+                handlers.execute(new ClientHandler(active, dispatcher, broadcaster,
+                        () -> sessions.remove(active)));
+            } catch (RejectedExecutionException ex) {
+                closeRejected(socket, session);
+                if (running.get()) {
+                    LOGGER.log(Level.WARNING, "Client handler rejected", ex);
                 }
-                break;
-            }
-            try (client) {
-                respond(client);
-            } catch (IOException ignored) {
-                // A client disconnect must not stop the listening socket.
+            } catch (SocketException ex) {
+                closeRejected(socket, session);
+                if (running.get()) {
+                    LOGGER.log(Level.WARNING, "Accept failed", ex);
+                }
+            } catch (IOException ex) {
+                closeRejected(socket, session);
+                if (running.get()) {
+                    LOGGER.log(Level.WARNING, "Accept failed", ex);
+                }
             }
         }
     }
 
-    private void respond(Socket client) throws IOException {
-        BufferedWriter output = new BufferedWriter(new OutputStreamWriter(
-                client.getOutputStream(), StandardCharsets.UTF_8));
-        String line;
-        while ((line = LineFraming.readLine(client.getInputStream())) != null) {
-            ResponseMessage response;
+    private void closeRejected(Socket socket, ClientSession session) {
+        if (session != null) {
+            sessions.remove(session);
+            session.close();
+        } else if (socket != null) {
             try {
-                RequestMessage request = JsonCodec.parseRequest(line);
-                response = dispatcher.dispatch(request);
-            } catch (InvalidProtocolException ex) {
-                response = ResponseMessage.error(null, ErrorCode.INVALID_REQUEST,
-                        "Invalid request JSON");
+                socket.close();
+            } catch (IOException ignored) {
+                // Socket was already closed.
             }
-            output.write(JsonCodec.toJson(response));
-            output.newLine();
-            output.flush();
         }
     }
 
     @Override
-    public void close() {
-        try {
-            listener.close();
-        } catch (IOException ignored) {
-            // The socket is already closed.
+    public synchronized void close() {
+        if (running.getAndSet(false)) {
+            if (scheduler != null) {
+                scheduler.close();
+            }
+            if (listener != null) {
+                try {
+                    listener.close();
+                } catch (IOException ignored) {
+                    // Closing an already closed listener is harmless.
+                }
+            }
+            for (ClientSession session : sessions) {
+                broadcaster.unsubscribeAll(session);
+                session.close();
+            }
+            handlers.shutdownNow();
         }
+        stopped.countDown();
     }
 }
