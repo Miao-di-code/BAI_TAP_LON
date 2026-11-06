@@ -12,7 +12,7 @@ class JsonCodecTest {
     void requestRoundTripsWithUtf8Payload() {
         JsonObject payload = new JsonObject();
         payload.addProperty("name", "Đấu giá tranh");
-        RequestMessage request = new RequestMessage("r-1", RequestType.PING, null, payload);
+        RequestMessage request = new RequestMessage("r-1", RequestType.CREATE_ITEM, null, payload);
         RequestMessage parsed = JsonCodec.parseRequest(JsonCodec.toJson(request));
         assertEquals(request.requestId(), parsed.requestId());
         assertEquals(request.type(), parsed.type());
@@ -44,4 +44,16 @@ class JsonCodecTest {
         assertThrows(InvalidProtocolException.class, () -> JsonCodec.parseResponse("{"));
     }
 
+    @Test
+    void eventRoundTripsAndRejectsInvalidFrame() {
+        JsonObject payload = new JsonObject();
+        payload.addProperty("price", 110);
+        EventMessage original = new EventMessage(EventType.BID_UPDATED, 7, payload);
+        EventMessage parsed = JsonCodec.parseEvent(JsonCodec.toJson(original));
+        assertEquals(EventType.BID_UPDATED, parsed.type());
+        assertEquals(7, parsed.auctionId());
+        assertEquals(110, parsed.payload().get("price").getAsLong());
+        assertThrows(InvalidProtocolException.class,
+                () -> JsonCodec.parseEvent("{\"type\":\"UNKNOWN\",\"auctionId\":7,\"payload\":{}}"));
+    }
 }
