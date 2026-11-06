@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<BorderPane xmlns:fx="http://javafx.com/fxml" fx:controller="com.btl.auction.client.controller.LoginController">
+    <center>
+        <VBox alignment="CENTER" spacing="14" maxWidth="380" styleClass="card">
+            <Label text="Online Auction" styleClass="title"/>
+            <Label text="Đăng nhập để tham gia phiên đấu giá" styleClass="subtitle"/>
+            <TextField fx:id="username" promptText="Tên đăng nhập" onAction="#login"/>
+            <PasswordField fx:id="password" promptText="Mật khẩu" onAction="#login"/>
+            <Label fx:id="feedback" wrapText="true" styleClass="feedback"/>
+            <Button fx:id="loginButton" text="Đăng nhập" onAction="#login" maxWidth="Infinity" styleClass="primary"/>
+            <Button text="Tạo tài khoản" onAction="#register" maxWidth="Infinity"/>
+        </VBox>
+    </center>
+</BorderPane>

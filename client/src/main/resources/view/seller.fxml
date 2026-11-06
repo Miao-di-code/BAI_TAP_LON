@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<BorderPane xmlns:fx="http://javafx.com/fxml" fx:controller="com.btl.auction.client.controller.SellerController">
+    <top>
+        <HBox alignment="CENTER_LEFT" spacing="12" styleClass="toolbar">
+            <Button text="← Danh sách" onAction="#back"/>
+            <Label text="Seller Dashboard" styleClass="title"/>
+        </HBox>
+    </top>
+    <center>
+        <ScrollPane fitToWidth="true">
+            <VBox spacing="12" styleClass="content">
+                <Label text="Sản phẩm của tôi" styleClass="section"/>
+                <ListView fx:id="items" prefHeight="150"/>
+                <GridPane hgap="12" vgap="10" styleClass="card">
+                    <Label text="Loại" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
+                    <ChoiceBox fx:id="category" GridPane.rowIndex="0" GridPane.columnIndex="1"/>
+                    <Label text="Tên" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
+                    <TextField fx:id="name" promptText="Tên sản phẩm" GridPane.rowIndex="1" GridPane.columnIndex="1"/>
+                    <Label text="Mô tả" GridPane.rowIndex="2" GridPane.columnIndex="0"/>
+                    <TextArea fx:id="description" prefRowCount="2" GridPane.rowIndex="2" GridPane.columnIndex="1"/>
+                    <Label text="Giá khởi điểm" GridPane.rowIndex="3" GridPane.columnIndex="0"/>
+                    <TextField fx:id="price" promptText="VND" GridPane.rowIndex="3" GridPane.columnIndex="1"/>
+                    <Label text="Chi tiết loại" GridPane.rowIndex="4" GridPane.columnIndex="0"/>
+                    <TextField fx:id="detail" promptText="Hãng / tác giả / nhà sản xuất" GridPane.rowIndex="4" GridPane.columnIndex="1"/>
+                </GridPane>
+                <HBox spacing="10">
+                    <Button text="Thêm sản phẩm" onAction="#createItem" styleClass="primary"/>
+                    <Button text="Sửa sản phẩm đã chọn" onAction="#updateItem"/>
+                    <Button text="Xóa sản phẩm đã chọn" onAction="#deleteItem"/>
+                    <Button text="Xóa form" onAction="#clear"/>
+                </HBox>
+                <Label text="Tạo phiên cho sản phẩm đã chọn" styleClass="section"/>
+                <HBox spacing="10">
+                    <TextField fx:id="start" promptText="Bắt đầu: dd/MM/yyyy HH:mm:ss" prefWidth="230"/>
+                    <TextField fx:id="end" promptText="Kết thúc: dd/MM/yyyy HH:mm:ss" prefWidth="230"/>
+                    <Button text="Giờ nhanh" onAction="#quickTimes"/>
+                    <Button text="Tạo phiên" onAction="#createAuction" styleClass="primary"/>
+                </HBox>
+                <Label text="Các phiên của tôi" styleClass="section"/>
+                <ListView fx:id="ownAuctions" prefHeight="140"/>
+                <Label fx:id="feedback" wrapText="true" styleClass="feedback"/>
+                <Button text="Tải lại" onAction="#refresh"/>
+            </VBox>
+        </ScrollPane>
+    </center>
+</BorderPane>

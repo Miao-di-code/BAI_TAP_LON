@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<BorderPane xmlns:fx="http://javafx.com/fxml" fx:controller="com.btl.auction.client.controller.ResultController">
+    <top>
+        <HBox alignment="CENTER_LEFT" spacing="12" styleClass="toolbar">
+            <Button text="← Chi tiết" onAction="#back"/>
+            <Label text="Kết quả đấu giá" styleClass="title"/>
+        </HBox>
+    </top>
+    <center>
+        <VBox alignment="CENTER" spacing="14" maxWidth="540" styleClass="card">
+            <Label fx:id="itemName" text="Đang tải sản phẩm..." styleClass="section"/>
+            <Label text="Trạng thái" styleClass="subtitle"/>
+            <Label fx:id="status" styleClass="section"/>
+            <Label text="Giá cuối cùng" styleClass="subtitle"/>
+            <Label fx:id="finalPrice" styleClass="price"/>
+            <Label text="Người thắng" styleClass="subtitle"/>
+            <Label fx:id="winner"/>
+            <Label fx:id="payment" wrapText="true" styleClass="result"/>
+            <Label fx:id="feedback" wrapText="true" styleClass="feedback"/>
+            <Button text="Tải lại kết quả" onAction="#refresh" styleClass="primary"/>
+        </VBox>
+    </center>
+</BorderPane>

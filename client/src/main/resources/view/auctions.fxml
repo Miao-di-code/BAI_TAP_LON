@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<BorderPane xmlns:fx="http://javafx.com/fxml" fx:controller="com.btl.auction.client.controller.AuctionsController">
+    <top>
+        <HBox alignment="CENTER_LEFT" spacing="12" styleClass="toolbar">
+            <Label text="Phiên đấu giá" styleClass="title" HBox.hgrow="ALWAYS"/>
+            <Label fx:id="welcome"/>
+            <Button fx:id="sellerButton" text="Quản lý sản phẩm" onAction="#seller"/>
+            <Button fx:id="adminButton" text="Quản trị" onAction="#admin"/>
+            <Button text="Đăng xuất" onAction="#logout"/>
+        </HBox>
+    </top>
+    <center>
+        <VBox spacing="12" styleClass="content">
+            <Label text="Tên · Loại · Giá hiện tại · Trạng thái · Kết thúc" styleClass="subtitle"/>
+            <ListView fx:id="auctions" VBox.vgrow="ALWAYS"/>
+            <Label fx:id="feedback" wrapText="true" styleClass="feedback"/>
+            <HBox spacing="10">
+                <Button text="Xem chi tiết" onAction="#detail" styleClass="primary"/>
+                <Button text="Tải lại danh sách" onAction="#refresh"/>
+            </HBox>
+        </VBox>
+    </center>
+</BorderPane>

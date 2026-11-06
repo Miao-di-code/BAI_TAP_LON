@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<BorderPane xmlns:fx="http://javafx.com/fxml" fx:controller="com.btl.auction.client.controller.RegisterController">
+    <center>
+        <VBox alignment="CENTER" spacing="12" maxWidth="420" styleClass="card">
+            <Label text="Tạo tài khoản" styleClass="title"/>
+            <TextField fx:id="username" promptText="Tên đăng nhập"/>
+            <TextField fx:id="displayName" promptText="Tên hiển thị"/>
+            <PasswordField fx:id="password" promptText="Mật khẩu"/>
+            <PasswordField fx:id="confirm" promptText="Xác nhận mật khẩu"/>
+            <ChoiceBox fx:id="role" maxWidth="Infinity"/>
+            <Label fx:id="feedback" wrapText="true" styleClass="feedback"/>
+            <Button fx:id="registerButton" text="Đăng ký" onAction="#register" maxWidth="Infinity" styleClass="primary"/>
+            <Button text="Quay lại đăng nhập" onAction="#back" maxWidth="Infinity"/>
+        </VBox>
+    </center>
+</BorderPane>
