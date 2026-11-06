@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.chart.*?>
+<?import javafx.scene.layout.*?>
+<BorderPane xmlns:fx="http://javafx.com/fxml" fx:controller="com.btl.auction.client.controller.DetailController">
+    <top>
+        <HBox alignment="CENTER_LEFT" spacing="12" styleClass="toolbar">
+            <Button text="← Danh sách" onAction="#back"/>
+            <Label text="Chi tiết phiên đấu giá" styleClass="title"/>
+        </HBox>
+    </top>
+    <center>
+        <ScrollPane fitToWidth="true">
+            <VBox spacing="14" styleClass="content">
+                <Label fx:id="title" text="Đang tải sản phẩm..." styleClass="section"/>
+                <Label fx:id="description" wrapText="true"/>
+                <GridPane hgap="16" vgap="10" styleClass="card">
+                    <Label text="Seller" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
+                    <Label fx:id="seller" GridPane.rowIndex="0" GridPane.columnIndex="1"/>
+                    <Label text="Giá khởi điểm" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
+                    <Label fx:id="startingPrice" GridPane.rowIndex="1" GridPane.columnIndex="1"/>
+                    <Label text="Giá hiện tại" GridPane.rowIndex="2" GridPane.columnIndex="0"/>
+                    <Label fx:id="currentPrice" styleClass="price" GridPane.rowIndex="2" GridPane.columnIndex="1"/>
+                    <Label text="Người dẫn đầu" GridPane.rowIndex="3" GridPane.columnIndex="0"/>
+                    <Label fx:id="leader" GridPane.rowIndex="3" GridPane.columnIndex="1"/>
+                    <Label text="Bắt đầu" GridPane.rowIndex="4" GridPane.columnIndex="0"/>
+                    <Label fx:id="starts" GridPane.rowIndex="4" GridPane.columnIndex="1"/>
+                    <Label text="Kết thúc" GridPane.rowIndex="5" GridPane.columnIndex="0"/>
+                    <Label fx:id="ends" GridPane.rowIndex="5" GridPane.columnIndex="1"/>
+                    <Label text="Trạng thái" GridPane.rowIndex="6" GridPane.columnIndex="0"/>
+                    <Label fx:id="status" GridPane.rowIndex="6" GridPane.columnIndex="1"/>
+                    <Label text="Còn lại" GridPane.rowIndex="7" GridPane.columnIndex="0"/>
+                    <Label fx:id="remaining" GridPane.rowIndex="7" GridPane.columnIndex="1"/>
+                </GridPane>
+                <Label fx:id="result" wrapText="true" styleClass="result" visible="false" managed="false"/>
+                <Button fx:id="resultButton" text="Xem màn kết quả" onAction="#openResult" visible="false" managed="false"/>
+                <HBox spacing="10" alignment="CENTER_LEFT">
+                    <TextField fx:id="amount" promptText="Giá bid (VND)"/>
+                    <Button fx:id="bidButton" text="Đặt giá" onAction="#bid" styleClass="primary"/>
+                    <Button fx:id="paidButton" text="Đánh dấu đã thanh toán" onAction="#markPaid" visible="false" managed="false"/>
+                    <Button fx:id="cancelButton" text="Hủy phiên" onAction="#cancel" visible="false" managed="false"/>
+                </HBox>
+                <HBox fx:id="autoBox" spacing="10" alignment="CENTER_LEFT" visible="false" managed="false">
+                    <TextField fx:id="maxBid" promptText="Giá tối đa (VND)"/>
+                    <TextField fx:id="increment" promptText="Bước giá (VND)"/>
+                    <Button text="Lưu auto-bid" onAction="#setAutoBid"/>
+                    <Button text="Tắt auto-bid" onAction="#removeAutoBid"/>
+                </HBox>
+                <Label fx:id="autoStatus" text="Auto-bid: chưa bật"/>
+                <Label fx:id="feedback" wrapText="true" styleClass="feedback"/>
+                <Label text="Lịch sử bid" styleClass="section"/>
+                <ListView fx:id="bids" prefHeight="180"/>
+                <LineChart fx:id="bidChart" title="Diễn biến giá" prefHeight="260" createSymbols="true" animated="false">
+                    <xAxis><NumberAxis label="Thời gian từ lúc bắt đầu (giây)"/></xAxis>
+                    <yAxis><NumberAxis label="Giá (VND)"/></yAxis>
+                </LineChart>
+                <Button text="Tải lại lịch sử" onAction="#history"/>
+            </VBox>
+        </ScrollPane>
+    </center>
+</BorderPane>
