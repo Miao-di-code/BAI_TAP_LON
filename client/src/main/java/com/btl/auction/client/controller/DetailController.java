@@ -4,7 +4,6 @@ import com.btl.auction.client.view.AppController;
 import com.btl.auction.client.view.Screen;
 import com.btl.auction.client.view.Ui;
 import com.btl.auction.common.dto.AuctionDto;
-import com.btl.auction.common.dto.AutoBidDto;
 import com.btl.auction.common.dto.BidDto;
 import com.btl.auction.common.dto.ItemDto;
 import com.btl.auction.common.model.AuctionStatus;
@@ -22,13 +21,10 @@ import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
-import javafx.scene.chart.LineChart;
-import javafx.scene.chart.XYChart;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
 import javafx.scene.control.TextField;
-import javafx.scene.layout.HBox;
 
 public final class DetailController implements Screen {
     @FXML private Label title;
@@ -44,11 +40,6 @@ public final class DetailController implements Screen {
     @FXML private Label result;
     @FXML private Label feedback;
     @FXML private TextField amount;
-    @FXML private TextField maxBid;
-    @FXML private TextField increment;
-    @FXML private HBox autoBox;
-    @FXML private Label autoStatus;
-    @FXML private LineChart<Number, Number> bidChart;
     @FXML private Button bidButton;
     @FXML private Button paidButton;
     @FXML private Button cancelButton;
@@ -72,14 +63,6 @@ public final class DetailController implements Screen {
     public void open(long id) {
         auctionId = id;
         bidButton.setDisable(true);
-        // Basic demo keeps automatic bidding out of the visible flow.
-        autoBox.setVisible(false);
-        autoBox.setManaged(autoBox.isVisible());
-        autoStatus.setVisible(autoBox.isVisible());
-        autoStatus.setManaged(autoBox.isVisible());
-        if (autoBox.isVisible()) {
-            loadAutoBid();
-        }
         eventListener = event -> {
             if (event.auctionId() == id) {
                 Platform.runLater(() -> {
@@ -182,53 +165,6 @@ public final class DetailController implements Screen {
                 : auction.status() == AuctionStatus.OPEN ? "Chưa bắt đầu" : "Đã kết thúc");
     }
 
-    private void loadAutoBid() {
-        Ui.receive(app.request(RequestType.GET_AUTO_BID, idPayload()), feedback, payload -> {
-            AutoBidDto config = Ui.parse(payload, "autoBid", AutoBidDto.class);
-            autoStatus.setText(config == null ? "Auto-bid: chưa bật"
-                    : "Auto-bid: tối đa " + Ui.money(config.maxBidVnd())
-                    + ", bước " + Ui.money(config.incrementVnd()));
-            if (config != null) {
-                maxBid.setText(Long.toString(config.maxBidVnd()));
-                increment.setText(Long.toString(config.incrementVnd()));
-            }
-        });
-    }
-
-    @FXML
-    private void setAutoBid() {
-        try {
-            long maximum = Ui.positiveLong(maxBid.getText());
-            long step = Ui.positiveLong(increment.getText());
-            if (auction == null || maximum <= auction.currentPriceVnd()) {
-                feedback.setText("Giá tối đa phải lớn hơn giá hiện tại.");
-                return;
-            }
-            JsonObject input = idPayload();
-            input.addProperty("maxBidVnd", maximum);
-            input.addProperty("incrementVnd", step);
-            Ui.receive(app.request(RequestType.SET_AUTO_BID, input), feedback, payload -> {
-                showAuction(Ui.parse(payload, "auction", AuctionDto.class));
-                AutoBidDto config = Ui.parse(payload, "autoBid", AutoBidDto.class);
-                autoStatus.setText("Auto-bid: tối đa " + Ui.money(config.maxBidVnd())
-                        + ", bước " + Ui.money(config.incrementVnd()));
-                feedback.setText("Đã lưu auto-bid.");
-                history();
-            });
-        } catch (NumberFormatException ex) {
-            feedback.setText("Giá tối đa và bước giá phải là số nguyên dương.");
-        }
-    }
-
-    @FXML
-    private void removeAutoBid() {
-        Ui.receive(app.request(RequestType.REMOVE_AUTO_BID, idPayload()), feedback, ignored -> {
-            autoStatus.setText("Auto-bid: chưa bật");
-            maxBid.clear();
-            increment.clear();
-        });
-    }
-
     @FXML
     private void bid() {
         long value;
@@ -265,15 +201,6 @@ public final class DetailController implements Screen {
             values.sort(Comparator.comparingLong(BidDto::createdAtEpochMs).thenComparingLong(BidDto::id));
             bids.getItems().setAll(values.stream().map(bid -> Ui.date(bid.createdAtEpochMs())
                     + " · Bidder #" + bid.bidderUserId() + " · " + Ui.money(bid.amountVnd())).toList());
-            XYChart.Series<Number, Number> series = new XYChart.Series<>();
-            series.setName("Giá đấu");
-            long startAt = auction == null ? 0 : auction.startAtEpochMs();
-            for (BidDto bid : values) {
-                series.getData().add(new XYChart.Data<>(
-                        Math.max(0, (bid.createdAtEpochMs() - startAt) / 1000.0),
-                        bid.amountVnd()));
-            }
-            bidChart.getData().setAll(series);
         });
     }
 

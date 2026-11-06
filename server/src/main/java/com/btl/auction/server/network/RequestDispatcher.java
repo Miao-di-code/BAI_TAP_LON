@@ -34,13 +34,6 @@ public final class RequestDispatcher {
 
     public ResponseMessage dispatch(RequestMessage request, ClientSession session) {
         try {
-            if (Boolean.getBoolean("auction.demo.basic")
-                    && (request.type() == com.btl.auction.common.protocol.RequestType.SET_AUTO_BID
-                    || request.type() == com.btl.auction.common.protocol.RequestType.GET_AUTO_BID
-                    || request.type() == com.btl.auction.common.protocol.RequestType.REMOVE_AUTO_BID)) {
-                return ResponseMessage.error(request.requestId(), ErrorCode.VALIDATION_ERROR,
-                        "Auto-bid is disabled in the basic demo");
-            }
             return ResponseMessage.ok(request.requestId(), handle(request, session));
         } catch (ServiceException ex) {
             String message = ex.getCode() == ErrorCode.INTERNAL_ERROR
@@ -104,16 +97,6 @@ public final class RequestDispatcher {
                 output.add("bid", gson.toJsonTree(result.bid()));
                 output.add("auction", gson.toJsonTree(result.auction()));
             }
-            case SET_AUTO_BID -> {
-                var result = auctions.setAutoBid(actor(request), number(input, "auctionId"),
-                        number(input, "maxBidVnd"), number(input, "incrementVnd"));
-                output.add("autoBid", gson.toJsonTree(result.autoBid()));
-                output.add("auction", gson.toJsonTree(result.auction()));
-            }
-            case GET_AUTO_BID -> output.add("autoBid", gson.toJsonTree(
-                    auctions.getAutoBid(actor(request), number(input, "auctionId"))));
-            case REMOVE_AUTO_BID -> auctions.removeAutoBid(actor(request),
-                    number(input, "auctionId"));
             case GET_BIDS, GET_BID_HISTORY -> output.add("bids", gson.toJsonTree(
                     auctions.getBids(number(input, "auctionId"))));
             case SUBSCRIBE_AUCTION -> {

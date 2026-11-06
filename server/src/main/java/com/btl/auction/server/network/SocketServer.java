@@ -5,7 +5,6 @@ import com.btl.auction.server.db.DatabaseInitializer;
 import com.btl.auction.server.event.AuctionEventPublisher;
 import com.btl.auction.server.service.AuctionScheduler;
 import com.btl.auction.server.service.AuctionService;
-import com.btl.auction.server.service.AntiSnipingPolicy;
 import com.btl.auction.server.service.AuthService;
 import com.btl.auction.server.service.ProductService;
 import java.io.IOException;
@@ -41,11 +40,6 @@ public final class SocketServer implements AutoCloseable {
     private AuctionScheduler scheduler;
 
     public SocketServer(int port, Path databasePath, Clock clock) throws IOException, SQLException {
-        this(port, databasePath, clock, AntiSnipingPolicy.disabled());
-    }
-
-    public SocketServer(int port, Path databasePath, Clock clock,
-                        AntiSnipingPolicy antiSniping) throws IOException, SQLException {
         if (port < 0 || port > 65535) {
             throw new IllegalArgumentException("Port out of range");
         }
@@ -53,7 +47,7 @@ public final class SocketServer implements AutoCloseable {
         this.clock = clock;
         Database database = DatabaseInitializer.initialize(databasePath);
         AuctionEventPublisher publisher = new AuctionEventPublisher();
-        auctions = new AuctionService(database, clock, publisher, antiSniping);
+        auctions = new AuctionService(database, clock, publisher);
         broadcaster = new AuctionEventBroadcaster(publisher);
         dispatcher = new RequestDispatcher(new AuthService(database, clock),
                 new ProductService(database), auctions, broadcaster);
