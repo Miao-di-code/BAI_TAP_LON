@@ -1,3 +1,4 @@
+// Week 3: Show auction detail feature
 package com.btl.auction.client.controller;
 
 import com.btl.auction.client.view.AppController;
