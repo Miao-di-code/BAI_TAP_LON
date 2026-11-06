@@ -18,7 +18,6 @@ import com.btl.auction.server.db.Database;
 import com.btl.auction.server.db.DatabaseInitializer;
 import com.btl.auction.server.db.Transactions;
 import com.btl.auction.server.service.PasswordHasher;
-import com.btl.auction.server.service.AntiSnipingPolicy;
 import com.google.gson.JsonObject;
 import java.io.BufferedInputStream;
 import java.io.BufferedWriter;
@@ -134,66 +133,6 @@ class SocketServerIntegrationTest {
                 assertTrue(seller.request(RequestType.GET_BID_HISTORY,
                         payload("auctionId", auctionId)).payload().getAsJsonArray("bids").size()
                         >= 3);
-            }
-        }
-    }
-
-    @Test
-    void autoBidAndAntiSnipingBroadcastUseRealSocketAndCurrentEnd() throws Exception {
-        MutableClock clock = new MutableClock(6_000_000);
-        try (SocketServer server = new SocketServer(0, directory.resolve("advanced-network.db"),
-                clock, new AntiSnipingPolicy(10_000, 20_000))) {
-            server.start();
-            try (Peer seller = new Peer(server.port());
-                 Peer first = new Peer(server.port());
-                 Peer second = new Peer(server.port())) {
-                seller.registerAndLogin("seller_advanced", "SELLER");
-                first.registerAndLogin("bidder_advanced_a", "BIDDER");
-                second.registerAndLogin("bidder_advanced_b", "BIDDER");
-                long itemId = seller.request(RequestType.CREATE_ITEM, payload("category", "ART",
-                        "name", "Artwork", "description", "Canvas", "startingPriceVnd", 100,
-                        "detail", "Artist")).payload().getAsJsonObject("item").get("id").getAsLong();
-                long auctionId = seller.request(RequestType.CREATE_AUCTION,
-                        payload("itemId", itemId, "startAtEpochMs", 6_000_000,
-                                "endAtEpochMs", 6_020_000)).payload()
-                        .getAsJsonObject("auction").get("id").getAsLong();
-                first.request(RequestType.SUBSCRIBE_AUCTION, payload("auctionId", auctionId));
-                second.request(RequestType.SUBSCRIBE_AUCTION, payload("auctionId", auctionId));
-                assertEquals(ErrorCode.FORBIDDEN, seller.request(RequestType.SET_AUTO_BID,
-                        payload("auctionId", auctionId, "maxBidVnd", 200,
-                                "incrementVnd", 10)).errorCode());
-                assertEquals(110, first.request(RequestType.SET_AUTO_BID,
-                        payload("auctionId", auctionId, "maxBidVnd", 200,
-                                "incrementVnd", 10)).payload().getAsJsonObject("auction")
-                        .get("currentPriceVnd").getAsLong());
-                second.awaitEvent(EventType.BID_UPDATED, 110);
-                assertEquals(190, second.request(RequestType.SET_AUTO_BID,
-                        payload("auctionId", auctionId, "maxBidVnd", 180,
-                                "incrementVnd", 5)).payload().getAsJsonObject("auction")
-                        .get("currentPriceVnd").getAsLong());
-                assertEquals(180, second.request(RequestType.GET_AUTO_BID,
-                        payload("auctionId", auctionId)).payload().getAsJsonObject("autoBid")
-                        .get("maxBidVnd").getAsLong());
-                first.awaitEvent(EventType.BID_UPDATED, 190);
-                clock.set(6_010_000);
-                ResponseMessage bid = second.request(RequestType.PLACE_BID,
-                        payload("auctionId", auctionId, "amountVnd", 195));
-                assertEquals(200, bid.payload().getAsJsonObject("auction")
-                        .get("currentPriceVnd").getAsLong());
-                assertEquals(6_040_000, bid.payload().getAsJsonObject("auction")
-                        .get("endAtEpochMs").getAsLong());
-                first.awaitEvent(EventType.AUCTION_EXTENDED, 200);
-                second.awaitEvent(EventType.AUCTION_EXTENDED, 200);
-                clock.set(6_020_000);
-                assertEquals("RUNNING", seller.request(RequestType.GET_AUCTION_DETAIL,
-                        payload("auctionId", auctionId)).payload().getAsJsonObject("auction")
-                        .get("status").getAsString());
-                clock.set(6_040_000);
-                assertEquals("FINISHED", seller.request(RequestType.GET_AUCTION_DETAIL,
-                        payload("auctionId", auctionId)).payload().getAsJsonObject("auction")
-                        .get("status").getAsString());
-                first.awaitEvent(EventType.AUCTION_FINISHED, 200);
-                second.awaitEvent(EventType.AUCTION_FINISHED, 200);
             }
         }
     }

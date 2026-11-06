@@ -89,18 +89,6 @@ public final class AuctionDao {
         }
     }
 
-    public boolean extendEnd(Connection connection, long id, long oldEnd, long newEnd)
-            throws SQLException {
-        try (PreparedStatement sql = connection.prepareStatement(
-                "UPDATE auctions SET end_at_ms = ? WHERE id = ? AND end_at_ms = ? "
-                        + "AND status = 'RUNNING'")) {
-            sql.setLong(1, newEnd);
-            sql.setLong(2, id);
-            sql.setLong(3, oldEnd);
-            return sql.executeUpdate() == 1;
-        }
-    }
-
     private AuctionDto map(ResultSet rows) throws SQLException {
         long leader = rows.getLong("leader_user_id");
         Long leaderId = rows.wasNull() ? null : leader;

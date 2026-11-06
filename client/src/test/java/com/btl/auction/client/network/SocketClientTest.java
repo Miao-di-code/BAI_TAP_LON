@@ -81,7 +81,7 @@ class SocketClientTest {
                     write(output, ResponseMessage.ok(firstId, firstPayload));
                     write(output, event(110));
                     write(output, event(130));
-                    write(output, extended(130, 1100));
+                    write(output, finished(130));
                     write(output, event(130));
                 } catch (Exception ex) {
                     throw new RuntimeException(ex);
@@ -97,7 +97,7 @@ class SocketClientTest {
             assertTrue(updatedEvents.await(5, TimeUnit.SECONDS));
             assertEquals(2, events.get());
             assertEquals(130, client.latestAuction(1).currentPriceVnd());
-            assertEquals(1100, client.latestAuction(1).endAtEpochMs());
+            assertEquals(AuctionStatus.FINISHED, client.latestAuction(1).status());
             assertTrue(disconnected.await(5, TimeUnit.SECONDS));
             assertFalse(client.isConnected());
             server.get(5, TimeUnit.SECONDS);
@@ -114,11 +114,11 @@ class SocketClientTest {
         return new EventMessage(EventType.BID_UPDATED, 1, payload);
     }
 
-    private static EventMessage extended(long price, long end) {
+    private static EventMessage finished(long price) {
         JsonObject payload = new JsonObject();
-        payload.add("auction", new Gson().toJsonTree(new AuctionDto(1, 1, 100, end,
-                price, 2L, AuctionStatus.RUNNING)));
-        return new EventMessage(EventType.AUCTION_EXTENDED, 1, payload);
+        payload.add("auction", new Gson().toJsonTree(new AuctionDto(1, 1, 100, 1000,
+                price, 2L, AuctionStatus.FINISHED)));
+        return new EventMessage(EventType.AUCTION_FINISHED, 1, payload);
     }
 
     private static void write(BufferedWriter writer, Object message) throws Exception {

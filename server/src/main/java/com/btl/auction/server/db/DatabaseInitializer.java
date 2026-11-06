@@ -19,9 +19,9 @@ public final class DatabaseInitializer {
         Files.createDirectories(normalized.getParent());
         Database database = new Database(normalized);
         String schema;
-        try (InputStream input = DatabaseInitializer.class.getResourceAsStream("/db/schema.sql")) {
+        try (InputStream input = DatabaseInitializer.class.getResourceAsStream("/schema.sql")) {
             if (input == null) {
-                throw new IOException("db/schema.sql is missing");
+                throw new IOException("schema.sql is missing");
             }
             schema = new String(input.readAllBytes(), StandardCharsets.UTF_8);
         }
@@ -33,30 +33,8 @@ public final class DatabaseInitializer {
                         statement.execute(sql);
                     }
                 }
-                int version;
-                try (java.sql.ResultSet row = statement.executeQuery("PRAGMA user_version")) {
-                    version = row.next() ? row.getInt(1) : 0;
-                }
-                if (version > 2) {
-                    throw new SQLException("Database schema version is newer than this application");
-                }
-                if (version < 2) {
-                    String migration;
-                    try (InputStream input = DatabaseInitializer.class.getResourceAsStream(
-                            "/db/migrations/V2__auto_bids.sql")) {
-                        if (input == null) {
-                            throw new IOException("V2 migration is missing");
-                        }
-                        migration = new String(input.readAllBytes(), StandardCharsets.UTF_8);
-                    }
-                    for (String sql : migration.split(";")) {
-                        if (!sql.isBlank()) {
-                            statement.execute(sql);
-                        }
-                    }
-                }
                 connection.commit();
-            } catch (SQLException | IOException ex) {
+            } catch (SQLException ex) {
                 connection.rollback();
                 throw ex;
             }

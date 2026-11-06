@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?import javafx.scene.control.*?>
-<?import javafx.scene.chart.*?>
 <?import javafx.scene.layout.*?>
 <BorderPane xmlns:fx="http://javafx.com/fxml" fx:controller="com.btl.auction.client.controller.DetailController">
     <top>
@@ -40,20 +39,9 @@
                     <Button fx:id="paidButton" text="Đánh dấu đã thanh toán" onAction="#markPaid" visible="false" managed="false"/>
                     <Button fx:id="cancelButton" text="Hủy phiên" onAction="#cancel" visible="false" managed="false"/>
                 </HBox>
-                <HBox fx:id="autoBox" spacing="10" alignment="CENTER_LEFT" visible="false" managed="false">
-                    <TextField fx:id="maxBid" promptText="Giá tối đa (VND)"/>
-                    <TextField fx:id="increment" promptText="Bước giá (VND)"/>
-                    <Button text="Lưu auto-bid" onAction="#setAutoBid"/>
-                    <Button text="Tắt auto-bid" onAction="#removeAutoBid"/>
-                </HBox>
-                <Label fx:id="autoStatus" text="Auto-bid: chưa bật"/>
                 <Label fx:id="feedback" wrapText="true" styleClass="feedback"/>
                 <Label text="Lịch sử bid" styleClass="section"/>
                 <ListView fx:id="bids" prefHeight="180"/>
-                <LineChart fx:id="bidChart" title="Diễn biến giá" prefHeight="260" createSymbols="true" animated="false" visible="false" managed="false">
-                    <xAxis><NumberAxis label="Thời gian từ lúc bắt đầu (giây)"/></xAxis>
-                    <yAxis><NumberAxis label="Giá (VND)"/></yAxis>
-                </LineChart>
                 <Button text="Tải lại lịch sử" onAction="#history"/>
             </VBox>
         </ScrollPane>

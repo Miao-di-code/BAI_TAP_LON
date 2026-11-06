@@ -23,8 +23,7 @@ import java.sql.Statement;
 import java.util.Objects;
 
 public final class SnapshotService {
-    private static final String[] TABLES_V1 = {"users", "items", "auctions", "bids"};
-    private static final String[] TABLES = {"users", "items", "auctions", "bids", "auto_bids"};
+    private static final String[] TABLES = {"users", "items", "auctions", "bids"};
     private final Database database;
     private final Gson gson = new GsonBuilder().setPrettyPrinting().create();
 
@@ -41,7 +40,7 @@ public final class SnapshotService {
             connection.setAutoCommit(false);
             try {
                 JsonObject result = new JsonObject();
-                result.addProperty("version", 2);
+                result.addProperty("version", 1);
                 for (String table : TABLES) {
                     result.add(table, readTable(connection, table));
                 }
@@ -67,10 +66,10 @@ public final class SnapshotService {
             snapshot = JsonParser.parseString(Files.readString(snapshotPath, StandardCharsets.UTF_8))
                     .getAsJsonObject();
             int version = snapshot.get("version").getAsInt();
-            if (version != 1 && version != 2) {
+            if (version != 1) {
                 throw new IllegalArgumentException("Unsupported snapshot version");
             }
-            tables = version == 1 ? TABLES_V1 : TABLES;
+            tables = TABLES;
             for (String table : tables) {
                 if (snapshot.getAsJsonArray(table) == null) {
                     throw new IllegalArgumentException("Missing snapshot table: " + table);
@@ -139,8 +138,6 @@ public final class SnapshotService {
                     "current_price_vnd", "leader_user_id", "status"};
             case "bids" -> new String[] {"id", "auction_id", "bidder_user_id", "amount_vnd",
                     "created_at_ms"};
-            case "auto_bids" -> new String[] {"id", "auction_id", "bidder_user_id",
-                    "max_bid_vnd", "increment_vnd", "created_at_ms"};
             default -> throw new IllegalArgumentException("Unknown table");
         };
         String query = "INSERT INTO " + table + " (" + String.join(",", columns) + ") VALUES ("
