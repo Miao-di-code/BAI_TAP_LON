@@ -34,6 +34,13 @@ public final class RequestDispatcher {
 
     public ResponseMessage dispatch(RequestMessage request, ClientSession session) {
         try {
+            if (Boolean.getBoolean("auction.demo.basic")
+                    && (request.type() == com.btl.auction.common.protocol.RequestType.SET_AUTO_BID
+                    || request.type() == com.btl.auction.common.protocol.RequestType.GET_AUTO_BID
+                    || request.type() == com.btl.auction.common.protocol.RequestType.REMOVE_AUTO_BID)) {
+                return ResponseMessage.error(request.requestId(), ErrorCode.VALIDATION_ERROR,
+                        "Auto-bid is disabled in the basic demo");
+            }
             return ResponseMessage.ok(request.requestId(), handle(request, session));
         } catch (ServiceException ex) {
             String message = ex.getCode() == ErrorCode.INTERNAL_ERROR

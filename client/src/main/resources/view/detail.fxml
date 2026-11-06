@@ -50,7 +50,7 @@
                 <Label fx:id="feedback" wrapText="true" styleClass="feedback"/>
                 <Label text="Lịch sử bid" styleClass="section"/>
                 <ListView fx:id="bids" prefHeight="180"/>
-                <LineChart fx:id="bidChart" title="Diễn biến giá" prefHeight="260" createSymbols="true" animated="false">
+                <LineChart fx:id="bidChart" title="Diễn biến giá" prefHeight="260" createSymbols="true" animated="false" visible="false" managed="false">
                     <xAxis><NumberAxis label="Thời gian từ lúc bắt đầu (giây)"/></xAxis>
                     <yAxis><NumberAxis label="Giá (VND)"/></yAxis>
                 </LineChart>

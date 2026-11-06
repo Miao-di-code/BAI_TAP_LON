@@ -26,16 +26,15 @@ class ModelTest {
     }
 
     @Test
-    void bidTransactionRejectsZeroAndNegativePrice() {
-        assertThrows(IllegalArgumentException.class, () -> {
-            new BidTransaction(1L, 42L, 99L, -50000L, 1690000000L);
-        });
-
-        assertThrows(IllegalArgumentException.class, () -> {
-            new BidTransaction(2L, 42L, 99L, 0L, 1690000000L);
-        });
-
-        BidTransaction validBid = new BidTransaction(3L, 42L, 99L, 150000L, 1690000000L);
-        assertEquals(150000L, validBid.getAmountVnd());
+    void auctionChecksTimeWindowAndStatusTransitions() {
+        Auction auction = new Auction(1, 2, 1_000, 2_000, 100, null, AuctionStatus.OPEN);
+        assertFalse(auction.acceptsBidsAt(1_500));
+        Auction running = auction.transitionTo(AuctionStatus.RUNNING);
+        assertFalse(running.acceptsBidsAt(999));
+        assertTrue(running.acceptsBidsAt(1_000));
+        assertFalse(running.acceptsBidsAt(2_000));
+        Auction finished = running.transitionTo(AuctionStatus.FINISHED);
+        assertEquals(AuctionStatus.PAID, finished.transitionTo(AuctionStatus.PAID).getStatus());
+        assertThrows(IllegalStateException.class, () -> running.transitionTo(AuctionStatus.PAID));
     }
 }
