@@ -1,5 +1,3 @@
-// Week 3: Show auction detail feature
-// Week 3: Submit bids validation
 package com.btl.auction.client.controller;
 
 import com.btl.auction.client.view.AppController;
@@ -74,7 +72,8 @@ public final class DetailController implements Screen {
     public void open(long id) {
         auctionId = id;
         bidButton.setDisable(true);
-        autoBox.setVisible(app.user().role() == UserRole.BIDDER);
+        // Basic demo keeps automatic bidding out of the visible flow.
+        autoBox.setVisible(false);
         autoBox.setManaged(autoBox.isVisible());
         autoStatus.setVisible(autoBox.isVisible());
         autoStatus.setManaged(autoBox.isVisible());
