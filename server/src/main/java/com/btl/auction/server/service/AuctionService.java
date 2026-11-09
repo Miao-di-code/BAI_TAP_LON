@@ -97,7 +97,9 @@ public final class AuctionService {
     }
 
     public BidResult placeBid(long bidderId, long auctionId, long amountVnd) {
-        refreshOne(auctionId, clock.millis());
+        refreshOne(auctionId, clock.millis()); // refresh de lay status chuan vi AuctionScheduler chi quet 1s/lan
+        // Phai tao them 1 ham lock vi withAuctionLock cua AuctionManager no throws Exception
+        // neu goi manager.withAuctionLock thi tat ca cho can khoa phong se phai try - catch ruom ra
         BidResult result = locked(auctionId, () -> {
             BidCommit committed = Transactions.write(database, connection -> {
                 requireBidder(connection, bidderId);
